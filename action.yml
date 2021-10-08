@@ -1,0 +1,22 @@
+name: "Autobump version and publish"
+description: "Hedia's npm packages autobumper & publisher"
+
+inputs:
+  GITHUB_TOKEN:
+    description: "GitHub token required to publish packages"
+    required: true
+
+  NPM_TOKEN:
+    description: "NPM token required to npm install"
+    required: true
+  SERVICE_NAME:
+    description: "Name of the service, used for the package"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: "Login to github registry"
+      run: echo inputs.GITHUB_TOKEN | docker login ghcr.io --username ${{ github.actor }} --password-stdin
+    - name: "Build docker image"
+      run: docker build -t ${{inputs.SERVICE_NAME}} --build-arg NPM_TOKEN=${{inputs.NPM_TOKEN}} .
+    - name: "idk"
