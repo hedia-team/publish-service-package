@@ -19,7 +19,6 @@ runs:
     - name: Install dependency
       run: sudo apt-get -y install skopeo
       shell: bash
-
     - name: Get pwd
       id: get-path
       run: |
