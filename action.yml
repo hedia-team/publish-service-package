@@ -42,7 +42,7 @@ runs:
     - name: Save latest version to variable
       id: before-build
       run: |
-        inspectOutput=$(skopeo inspect -f {{.Labels.version}} docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest)
+        inspectOutput=$(skopeo inspect -f {{.Labels.org.opencontainers.image.version}} docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest)
         echo ::set-output name=version::"$inspectOutput"
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
