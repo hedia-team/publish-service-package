@@ -36,16 +36,15 @@ runs:
     - name: Extract package version
       id: package-version
       run: |
-        initialPackageJSON=$(sed -nE 's/^\s*"version": "([0-9]+.[0-9]+.[0-9]+).*?",$/\1/p' package.json)
+        initialPackageJSON="$(sed -nE 's/^\s*"version": "([0-9]+.[0-9]+.[0-9]+).*?",$/\1/p' package.json)"
         echo ::set-output name=version::"$initialPackageJSON"
       shell: bash
     - name: Save latest version to variable
       id: before-build
       run: |
-        inspectOutput=$(skopeo inspect -f {{.Labels.org.opencontainers.image.version}} docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest)
-        version=$(( $inspectOutput == <no value> ? "0.0.0" : $inspectOutput ))  
-        echo "Version set to: $version"
-        echo ::set-output name=version::"$version"
+        inspectOutput=$(skopeo inspect -f {{.Labels.org.opencontainers.image.version}} docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest); [[ "$inspectOutput" != "<no value>" ]] && inspectOutput="0.0.0"
+        echo "Version set to: $inspectOutput"
+        echo ::set-output name=version::"$inspectOutput"
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
       shell: bash
