@@ -1,30 +1,35 @@
-name: "Autobump version and publish"
-description: "Hedia's npm packages autobumper & publisher"
+name: "Publish service package"
+description: "Publish Docker image of a service as a package to GitHub Container registry."
 
 inputs:
   GITHUB_TOKEN:
-    description: "GitHub token required to publish packages"
+    description: "GitHub token required to publish packages."
     required: true
   NPM_TOKEN:
-    description: "NPM token required to npm install"
+    description: "NPM token required to npm install."
     required: true
+
 runs:
   using: "composite"
+  
   steps:
     - name: Set git identity
       run: |
         git config --global user.email ci@hedia.co
         git config --global user.name HediaBot
       shell: bash
+    
     - name: Install dependency
       run: sudo apt-get -y install skopeo
       shell: bash
+    
     - name: Get pwd
       id: get-path
       run: |
         ACTION_PATH=$(pwd)
         echo ::set-output name=path::"$ACTION_PATH"
       shell: bash
+    
     - name: Login to github registry
       run: |
         mkdir skopeo-cache && \
@@ -33,12 +38,14 @@ runs:
       shell: bash
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
+    
     - name: Extract package version
       id: package-version
       run: |
         initialPackageJSON="$(sed -nE 's/^\s*"version": "([0-9]+.[0-9]+.[0-9]+).*?",$/\1/p' package.json)"
         echo ::set-output name=version::"$initialPackageJSON"
       shell: bash
+    
     - name: Save latest version to variable
       id: before-build
       run: |
@@ -48,6 +55,7 @@ runs:
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
       shell: bash
+    
     - name: Check version and push build
       run: |
         if [[ ${{ steps.before-build.outputs.version }} == ${{ steps.package-version.outputs.version }} ]]; then
@@ -58,18 +66,20 @@ runs:
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
       shell: bash
+    
     - name: Build docker image
       run: |
         docker build -f Dockerfile \
-        -t ghcr.io/hedia-team/${{github.event.repository.name}}:${{steps.package-version.outputs.version}} \
-        -t ghcr.io/hedia-team/${{github.event.repository.name}}:latest \
-        --build-arg NPM_TOKEN=${{inputs.NPM_TOKEN}} \
-        --build-arg BUILD_VERSION=${{steps.package-version.outputs.version}} \
+        -t ghcr.io/hedia-team/${{ github.event.repository.name }}:${{ steps.package-version.outputs.version }} \
+        -t ghcr.io/hedia-team/${{ github.event.repository.name }}:latest \
+        --build-arg NPM_TOKEN=${{ inputs.NPM_TOKEN }} \
+        --build-arg BUILD_VERSION=${{ steps.package-version.outputs.version }} \
         .
       shell: bash
+    
     - name: Check version and push build
       run: |
-        docker push ghcr.io/hedia-team/${{github.event.repository.name}} --all-tags
+        docker push ghcr.io/hedia-team/${{ github.event.repository.name }} --all-tags
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
       shell: bash
