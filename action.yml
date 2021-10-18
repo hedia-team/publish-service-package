@@ -44,6 +44,7 @@ runs:
       run: |
         inspectOutput=$(skopeo inspect -f {{.Labels.org.opencontainers.image.version}} docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest)
         version=$([ inspectOutput == "<no value>"  ] && echo "0.0.0" || echo "$version")
+        echo "Version set to: $version"
         echo ::set-output name=version::"$version"
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
