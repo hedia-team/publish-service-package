@@ -42,7 +42,7 @@ runs:
     - name: Save latest version to variable
       id: before-build
       run: |
-        inspectOutput=$(skopeo inspect -f {{.Labels.org.opencontainers.image.version}} docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest); [[ "$inspectOutput" != "<no value>" ]] && inspectOutput="0.0.0"
+        inspectOutput=$(skopeo inspect -f {{.Labels.org.opencontainers.image.version}} docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest); [[ "$inspectOutput" == "<no value>" ]] && inspectOutput="0.0.0"
         echo "Version set to: $inspectOutput"
         echo ::set-output name=version::"$inspectOutput"
       env:
