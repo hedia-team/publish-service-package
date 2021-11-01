@@ -5,9 +5,25 @@ inputs:
   GITHUB_TOKEN:
     description: "GitHub token required to publish packages."
     required: true
+
   NPM_TOKEN:
     description: "NPM token required to npm install."
     required: true
+
+  git-email:
+    description: "Value for git config user.email"
+    required: false
+    default: "github-action@users.noreply.github.com"
+
+  git-name:
+    description: "Value for git config user.name"
+    required: false
+    default: "github-actions[bot]"
+
+  registry-user:
+    description: "Value for Github container registry user"
+    required: false
+    default: "github-actions[bot]"
 
 runs:
   using: "composite"
@@ -15,8 +31,8 @@ runs:
   steps:
     - name: Set git identity
       run: |
-        git config --global user.email ci@hedia.co
-        git config --global user.name HediaBot
+        git config --global user.email ${{ inputs.git-email }}
+        git config --global user.name ${{ inputs.git-name }}
       shell: bash
 
     - name: Install dependency
@@ -33,8 +49,8 @@ runs:
     - name: Login to github registry
       run: |
         mkdir skopeo-cache && \
-        echo ${{ inputs.GITHUB_TOKEN }} | skopeo login -u hedia-bot --password-stdin ghcr.io
-        echo ${{ inputs.GITHUB_TOKEN }} | docker login ghcr.io --username phanatic --password-stdin
+        echo ${{ inputs.GITHUB_TOKEN }} | skopeo login -u ${{ inputs.registry-user }} --password-stdin ghcr.io
+        echo ${{ inputs.GITHUB_TOKEN }} | docker login ghcr.io --username ${{ inputs.registry-user }} --password-stdin
       shell: bash
       env:
         XDG_RUNTIME_DIR: ${{ steps.get-path.outputs.path }}/skopeo-cache
@@ -49,7 +65,7 @@ runs:
     - name: Save latest version to variable
       id: before-build
       run: |
-        inspectOutput=$(skopeo inspect docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest | jq -r '.Labels["org.opencontainers.image.version"]')
+        inspectOutput=$((skopeo inspect docker://ghcr.io/hedia-team/${{ github.event.repository.name }}:latest || echo null) | jq -r '.Labels["org.opencontainers.image.version"]')
         if [[ "$inspectOutput" == "null" ]]; then inspectOutput="0.0.0"; fi
         echo ::set-output name=version::"$inspectOutput"
       env:
